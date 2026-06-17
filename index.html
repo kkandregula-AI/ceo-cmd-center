@@ -167,6 +167,7 @@ body{overflow:hidden}
 .kpi-nps::after{background:var(--purple)}
 .kpi-burn::after{background:var(--red)}
 .kpi-csat::after{background:var(--gold)}
+.kpi-cash::after{background:#3ec9c9}
 .kpi-editor-label{font-size:11px;font-weight:600;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
 .kpi-editor-label .kpi-icon{font-size:16px}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
@@ -202,6 +203,38 @@ body{overflow:hidden}
 /* TOAST */
 .toast{position:fixed;bottom:24px;right:24px;z-index:200;background:var(--surface2);border:1px solid var(--gold-dim);border-radius:10px;padding:12px 20px;font-size:13px;color:var(--text);transform:translateY(80px);opacity:0;transition:.3s;display:flex;align-items:center;gap:8px;}
 .toast.show{transform:translateY(0);opacity:1}
+
+/* DELETE BTN */
+.del-x{margin-left:auto;color:var(--text3);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px;flex-shrink:0;transition:.15s;}
+.del-x:hover{color:var(--red);background:rgba(224,92,92,.12)}
+
+/* WELCOME / FIRST RUN */
+.welcome-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+.welcome-card{background:var(--surface);border:1px solid var(--gold-dim);border-radius:16px;padding:36px;width:min(480px,90vw);text-align:center;}
+.welcome-title{font-family:var(--font-display);font-size:30px;color:var(--gold);margin-bottom:10px}
+.welcome-sub{font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:26px}
+.welcome-btns{display:flex;flex-direction:column;gap:10px}
+.welcome-btn{padding:13px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:.2s;border:1px solid var(--border2);}
+.welcome-btn-primary{background:linear-gradient(135deg,var(--gold-dim),#4a3c1e);border-color:var(--gold);color:var(--gold2);}
+.welcome-btn-primary:hover{background:var(--gold);color:#000}
+.welcome-btn-ghost{background:transparent;color:var(--text2)}
+.welcome-btn-ghost:hover{border-color:var(--border2);color:var(--text)}
+
+/* EMPTY STATE */
+.empty-hint{text-align:center;padding:24px 12px;color:var(--text3);font-size:12px;line-height:1.6}
+
+/* FOLLOW-UPS */
+.followup-item{display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface2);border-radius:8px;margin-bottom:8px;border-left:3px solid var(--blue);position:relative;}
+.followup-item.overdue{border-left-color:var(--red);background:rgba(224,92,92,.07)}
+.followup-item.done{opacity:.45}
+.fu-check{width:18px;height:18px;border-radius:5px;border:2px solid var(--border2);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;transition:.15s;}
+.fu-check.checked{background:var(--green);border-color:var(--green);color:#000}
+.fu-body{flex:1;min-width:0}
+.fu-text{font-size:13px;color:var(--text);margin-bottom:3px}
+.fu-meta{font-size:11px;color:var(--text3);display:flex;gap:10px;flex-wrap:wrap}
+.fu-owner{color:var(--gold)}
+.fu-due{font-family:var(--font-mono)}
+.fu-due.overdue-text{color:var(--red);font-weight:600}
 </style>
 </head>
 <body>
@@ -216,6 +249,7 @@ body{overflow:hidden}
     </div>
     <div class="topbar-right">
       <div class="pulse-dot" title="System Online"></div>
+      <button class="api-btn" style="background:linear-gradient(135deg,#3a1e1e,#2a1414);border-color:var(--red);color:#f0a0a0" onclick="confirmFreshStart()" title="Clear all sample data and start fresh">🗑 Fresh Start</button>
       <button class="api-btn" onclick="openApiModal()">⚙ API Key</button>
     </div>
   </div>
@@ -244,28 +278,17 @@ body{overflow:hidden}
       <div class="grid-2">
         <div class="card">
           <div class="card-title">Today's Schedule</div>
-          <div id="meetings-list">
-            <div class="meeting-item"><div class="meeting-time">09:00 – 09:45 AM</div><div class="meeting-title">Leadership Sync</div><div class="meeting-who">C-Suite + BU Heads · Board Room</div></div>
-            <div class="meeting-item"><div class="meeting-time">11:00 – 11:30 AM</div><div class="meeting-title">Q3 Financial Review</div><div class="meeting-who">CFO, VP Finance · Virtual</div></div>
-            <div class="meeting-item"><div class="meeting-time">02:00 – 03:00 PM</div><div class="meeting-title">Investor Update Call</div><div class="meeting-who">Sequoia Partners · Zoom</div></div>
-            <div class="meeting-item"><div class="meeting-time">04:30 – 05:00 PM</div><div class="meeting-title">Product Roadmap Walkthrough</div><div class="meeting-who">CPO, CTO · Board Room</div></div>
-          </div>
+          <div id="meetings-list"></div>
           <button class="action-btn" style="margin-top:10px" onclick="addMeeting()">+ Add Meeting</button>
         </div>
         <div class="card">
           <div class="card-title">Today's Top Priorities</div>
-          <div id="dash-priorities">
-            <div class="priority-item" onclick="switchTab('priorities')"><div class="pri-badge pri-high"></div><div class="pri-text">Approve Q3 budget revision (+12% R&D)</div><div class="pri-tag">FINANCE</div></div>
-            <div class="priority-item" onclick="switchTab('priorities')"><div class="pri-badge pri-high"></div><div class="pri-text">Sign MOU with Bangalore tech partner</div><div class="pri-tag">GROWTH</div></div>
-            <div class="priority-item" onclick="switchTab('priorities')"><div class="pri-badge pri-med"></div><div class="pri-text">Review VP Engineering candidate shortlist</div><div class="pri-tag">HR</div></div>
-            <div class="priority-item" onclick="switchTab('priorities')"><div class="pri-badge pri-med"></div><div class="pri-text">Respond to board query on ESG disclosure</div><div class="pri-tag">GOVERNANCE</div></div>
-            <div class="priority-item" onclick="switchTab('priorities')"><div class="pri-badge pri-low"></div><div class="pri-text">Review brand refresh proposal from agency</div><div class="pri-tag">BRAND</div></div>
-          </div>
+          <div id="dash-priorities"></div>
         </div>
       </div>
       <div class="card">
         <div class="card-title">30-Day Decision Streak</div>
-        <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Daily CEO actions logged · <span style="color:var(--gold)">🔥 18-day streak</span></div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Daily CEO actions logged · <span style="color:var(--gold)" id="streak-label">🔥 0-day streak</span></div>
         <div class="streak-row" id="streak-row"></div>
       </div>
     </div>
@@ -427,6 +450,42 @@ body{overflow:hidden}
           <div class="last-updated" id="lu-nps"></div>
         </div>
 
+        <!-- Cash Position -->
+        <div class="kpi-editor-card kpi-cash">
+          <div class="kpi-editor-label"><span class="kpi-icon">🏦</span>Cash Position</div>
+          <div class="field-row">
+            <div class="field-group">
+              <div class="field-label">CASH IN BANK</div>
+              <input class="field-input" id="ed-cash-val" placeholder="e.g. 21.6" type="number" step="0.1" oninput="livePreview('cash')"/>
+            </div>
+            <div class="field-group">
+              <div class="field-label">UNIT</div>
+              <select class="field-select" id="ed-cash-unit">
+                <option value="Cr">₹ Crores</option>
+                <option value="L">₹ Lakhs</option>
+                <option value="M">$ Millions</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <div class="field-label">RECEIVABLES (OWED TO US)</div>
+              <input class="field-input" id="ed-cash-recv" placeholder="e.g. 3.2" type="number" step="0.1" oninput="livePreview('cash')"/>
+            </div>
+            <div class="field-group">
+              <div class="field-label">PAYABLES (WE OWE)</div>
+              <input class="field-input" id="ed-cash-pay" placeholder="e.g. 1.8" type="number" step="0.1" oninput="livePreview('cash')"/>
+            </div>
+          </div>
+          <div class="kpi-preview" id="prev-cash">
+            <div class="kpi-preview-val" id="prev-cash-val">—</div>
+            <div class="kpi-preview-sub" id="prev-cash-sub">Enter values above</div>
+            <div class="kpi-preview-delta" id="prev-cash-delta"></div>
+          </div>
+          <button class="save-kpi-btn" onclick="saveKPI('cash')">Save Cash Data ▸</button>
+          <div class="last-updated" id="lu-cash"></div>
+        </div>
+
         <!-- Burn Rate / Runway -->
         <div class="kpi-editor-card kpi-burn">
           <div class="kpi-editor-label"><span class="kpi-icon">🔥</span>Monthly Burn / Runway</div>
@@ -436,25 +495,11 @@ body{overflow:hidden}
               <input class="field-input" id="ed-burn-val" placeholder="e.g. 1.2" type="number" step="0.1" oninput="livePreview('burn')"/>
             </div>
             <div class="field-group">
-              <div class="field-label">RUNWAY (MONTHS)</div>
-              <input class="field-input" id="ed-burn-runway" placeholder="e.g. 18" type="number" oninput="livePreview('burn')"/>
-            </div>
-          </div>
-          <div class="field-row">
-            <div class="field-group">
               <div class="field-label">UNIT</div>
               <select class="field-select" id="ed-burn-unit">
                 <option value="Cr">₹ Crores</option>
                 <option value="L">₹ Lakhs</option>
                 <option value="M">$ Millions</option>
-              </select>
-            </div>
-            <div class="field-group">
-              <div class="field-label">STATUS</div>
-              <select class="field-select" id="ed-burn-status">
-                <option value="safe">✅ Safe</option>
-                <option value="watch">⚠️ Watch</option>
-                <option value="critical">🔴 Critical</option>
               </select>
             </div>
           </div>
@@ -463,6 +508,7 @@ body{overflow:hidden}
             <div class="kpi-preview-sub" id="prev-burn-sub">Enter values above</div>
             <div class="kpi-preview-delta" id="prev-burn-delta"></div>
           </div>
+          <div style="font-size:10px;color:var(--text3);margin-top:8px;font-family:var(--font-mono)">Runway is auto-calculated from Cash Position ÷ Monthly Burn — no need to enter it manually.</div>
           <button class="save-kpi-btn" onclick="saveKPI('burn')">Save Burn Data ▸</button>
           <div class="last-updated" id="lu-burn"></div>
         </div>
@@ -555,20 +601,19 @@ body{overflow:hidden}
         <button class="action-btn" onclick="clearDone()">✓ Clear Done</button>
       </div>
       <div class="grid-2">
-        <div class="card"><div class="card-title" style="color:var(--red)">🔴 Critical — Today</div><div id="pri-high-list">
-          <div class="priority-item" onclick="toggleDone(this)"><div class="pri-badge pri-high"></div><div class="pri-text">Approve Q3 budget revision</div><div class="pri-tag">FINANCE</div></div>
-          <div class="priority-item" onclick="toggleDone(this)"><div class="pri-badge pri-high"></div><div class="pri-text">Sign MOU with tech partner</div><div class="pri-tag">GROWTH</div></div>
-        </div></div>
-        <div class="card"><div class="card-title" style="color:var(--amber)">🟡 Important — This Week</div><div id="pri-med-list">
-          <div class="priority-item" onclick="toggleDone(this)"><div class="pri-badge pri-med"></div><div class="pri-text">VP Engineering shortlist review</div><div class="pri-tag">HR</div></div>
-          <div class="priority-item" onclick="toggleDone(this)"><div class="pri-badge pri-med"></div><div class="pri-text">Product roadmap sign-off for Q4</div><div class="pri-tag">PRODUCT</div></div>
-        </div></div>
-        <div class="card"><div class="card-title" style="color:var(--green)">🟢 Monitor — This Month</div><div id="pri-low-list">
-          <div class="priority-item" onclick="toggleDone(this)"><div class="pri-badge pri-low"></div><div class="pri-text">Brand refresh agency proposal</div><div class="pri-tag">BRAND</div></div>
-        </div></div>
-        <div class="card"><div class="card-title">✓ Completed</div><div id="pri-done-list">
-          <div class="priority-item" style="opacity:.5;text-decoration:line-through"><div class="pri-badge pri-high"></div><div class="pri-text">Morning leadership briefing reviewed</div><div class="pri-tag">DONE</div></div>
-        </div></div>
+        <div class="card"><div class="card-title" style="color:var(--red)">🔴 Critical — Today</div><div id="pri-high-list"></div></div>
+        <div class="card"><div class="card-title" style="color:var(--amber)">🟡 Important — This Week</div><div id="pri-med-list"></div></div>
+        <div class="card"><div class="card-title" style="color:var(--green)">🟢 Monitor — This Month</div><div id="pri-low-list"></div></div>
+        <div class="card"><div class="card-title">✓ Completed</div><div id="pri-done-list"></div></div>
+      </div>
+
+      <div class="action-bar" style="margin-top:6px">
+        <button class="action-btn" onclick="addFollowup()">+ Add Follow-up</button>
+      </div>
+      <div class="card card-full">
+        <div class="card-title">⏳ Waiting On — Delegated to Others</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Things you've asked someone else to do. Overdue items are flagged in red.</div>
+        <div id="followup-list"></div>
       </div>
     </div>
 
@@ -580,10 +625,7 @@ body{overflow:hidden}
       </div>
       <div class="card card-full">
         <div class="card-title">Decision Log — Running Record</div>
-        <div id="decision-list">
-          <div class="decision-item"><div class="dec-meta"><span class="dec-title">Expand to Pune Market by Q4</span><span class="dec-date">Jun 6, 2026</span></div><div class="dec-body">Board approved ₹2.5Cr for Pune office. Target: 200 enterprise clients in 6 months.</div><span class="dec-status dec-open">IN PROGRESS</span></div>
-          <div class="decision-item"><div class="dec-meta"><span class="dec-title">Adopt Hybrid Work Policy — 3+2</span><span class="dec-date">May 30, 2026</span></div><div class="dec-body">3 days office, 2 days remote. Effective Aug 1.</div><span class="dec-status dec-closed">IMPLEMENTED</span></div>
-        </div>
+        <div id="decision-list"></div>
       </div>
     </div>
 
@@ -596,15 +638,19 @@ body{overflow:hidden}
       <div class="card card-full"><div class="card-title">Direct Reports & BU Heads</div><div class="team-grid" id="team-grid"></div></div>
       <div class="grid-2">
         <div class="card">
-          <div class="card-title">Org Health Signals</div>
-          <div class="priority-item"><div class="pri-badge pri-high"></div><div class="pri-text">Engineering — 3 burnout flags this week</div><div class="pri-tag">ALERT</div></div>
-          <div class="priority-item"><div class="pri-badge pri-med"></div><div class="pri-text">Sales — Q3 morale dip, target pressure</div><div class="pri-tag">WATCH</div></div>
-          <div class="priority-item"><div class="pri-badge pri-low"></div><div class="pri-text">Product — High energy, roadmap excitement</div><div class="pri-tag">GOOD</div></div>
+          <div class="card-title">Org Health Signals <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(sample)</span></div>
+          <div id="org-health-block">
+            <div class="priority-item"><div class="pri-badge pri-high"></div><div class="pri-text">Engineering — 3 burnout flags this week</div><div class="pri-tag">ALERT</div></div>
+            <div class="priority-item"><div class="pri-badge pri-med"></div><div class="pri-text">Sales — Q3 morale dip, target pressure</div><div class="pri-tag">WATCH</div></div>
+            <div class="priority-item"><div class="pri-badge pri-low"></div><div class="pri-text">Product — High energy, roadmap excitement</div><div class="pri-tag">GOOD</div></div>
+          </div>
         </div>
         <div class="card">
-          <div class="card-title">Upcoming 1-on-1s</div>
-          <div class="meeting-item"><div class="meeting-time">Tomorrow 10:00 AM</div><div class="meeting-title">Ravi Kumar — CTO</div><div class="meeting-who">Monthly strategic alignment</div></div>
-          <div class="meeting-item"><div class="meeting-time">Thu 3:00 PM</div><div class="meeting-title">Priya Sharma — CFO</div><div class="meeting-who">Budget review debrief</div></div>
+          <div class="card-title">Upcoming 1-on-1s <span style="color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">(sample)</span></div>
+          <div id="one-on-ones-block">
+            <div class="meeting-item"><div class="meeting-time">Tomorrow 10:00 AM</div><div class="meeting-title">Ravi Kumar — CTO</div><div class="meeting-who">Monthly strategic alignment</div></div>
+            <div class="meeting-item"><div class="meeting-time">Thu 3:00 PM</div><div class="meeting-title">Priya Sharma — CFO</div><div class="meeting-who">Budget review debrief</div></div>
+          </div>
         </div>
       </div>
     </div>
@@ -661,12 +707,111 @@ body{overflow:hidden}
   </div>
 </div>
 
+<!-- Follow-up Modal -->
+<div class="modal-overlay" id="followup-modal" style="display:none" onclick="if(event.target===this)closeFollowupModal()">
+  <div class="modal">
+    <div class="modal-title">Add Follow-up</div>
+    <div class="modal-sub">Track something you're waiting on from someone else</div>
+    <input class="modal-input" id="fu-input-text" placeholder="What are you waiting on? (e.g. Updated investor deck)"/>
+    <input class="modal-input" id="fu-input-owner" placeholder="Who owns this? (e.g. CFO — Priya Sharma)"/>
+    <div class="field-group" style="margin-bottom:14px">
+      <div class="field-label" style="margin-bottom:4px">DUE DATE</div>
+      <input class="modal-input" id="fu-input-due" type="date" style="margin-bottom:0"/>
+    </div>
+    <div class="modal-footer"><button class="btn-ghost" onclick="closeFollowupModal()">Cancel</button><button class="btn-primary" onclick="saveFollowup()">Add ▸</button></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
+
+<!-- First-Run Welcome -->
+<div class="welcome-overlay" id="welcome-overlay" style="display:none">
+  <div class="welcome-card">
+    <div class="welcome-title">Welcome to ExecOS</div>
+    <div class="welcome-sub">This command center comes pre-loaded with <strong style="color:var(--gold2)">sample data</strong> so you can see how everything works — fictional KPIs, priorities, meetings, decisions, and team members.<br><br>How would you like to begin?</div>
+    <div class="welcome-btns">
+      <button class="welcome-btn welcome-btn-primary" onclick="dismissWelcome(false)">🗑 Start Fresh — Clear all sample data</button>
+      <button class="welcome-btn welcome-btn-ghost" onclick="dismissWelcome(true)">👀 Keep sample data — I'll explore first</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ══ STATE ══
 let apiKey='';
 try{apiKey=localStorage.getItem('execos_api')||'';}catch(e){}
+
+// ══ SEED / SAMPLE DATA (used only on very first load) ══
+const SEED_PRIORITIES=[
+  {id:'s1',level:'high',text:'Approve Q3 budget revision (+12% R&D)',tag:'FINANCE',done:false,sample:true},
+  {id:'s2',level:'high',text:'Sign MOU with Bangalore tech partner',tag:'GROWTH',done:false,sample:true},
+  {id:'s3',level:'med',text:'Review VP Engineering candidate shortlist',tag:'HR',done:false,sample:true},
+  {id:'s4',level:'med',text:'Respond to board query on ESG disclosure',tag:'GOVERNANCE',done:false,sample:true},
+  {id:'s5',level:'low',text:'Review brand refresh proposal from agency',tag:'BRAND',done:false,sample:true},
+  {id:'s6',level:'high',text:'Morning leadership briefing reviewed',tag:'DONE',done:true,sample:true}
+];
+const SEED_MEETINGS=[
+  {id:'m1',time:'09:00 – 09:45 AM',title:'Leadership Sync',who:'C-Suite + BU Heads · Board Room',sample:true},
+  {id:'m2',time:'11:00 – 11:30 AM',title:'Q3 Financial Review',who:'CFO, VP Finance · Virtual',sample:true},
+  {id:'m3',time:'02:00 – 03:00 PM',title:'Investor Update Call',who:'Sequoia Partners · Zoom',sample:true},
+  {id:'m4',time:'04:30 – 05:00 PM',title:'Product Roadmap Walkthrough',who:'CPO, CTO · Board Room',sample:true}
+];
+const SEED_DECISIONS=[
+  {id:'d1',title:'Expand to Pune Market by Q4',date:'Jun 6, 2026',body:'Board approved ₹2.5Cr for Pune office. Target: 200 enterprise clients in 6 months.',status:'open',sample:true},
+  {id:'d2',title:'Adopt Hybrid Work Policy — 3+2',date:'May 30, 2026',body:'3 days office, 2 days remote. Effective Aug 1.',status:'closed',sample:true}
+];
+const SEED_TEAM=[
+  {id:'t1',name:'Ravi Kumar',role:'CTO',avatar:'RK',color:'#5c8fe0',mood:82,sample:true},
+  {id:'t2',name:'Priya Sharma',role:'CFO',avatar:'PS',color:'#4ecb8d',mood:90,sample:true},
+  {id:'t3',name:'Anand Reddy',role:'VP Sales',avatar:'AR',color:'#e0a84c',mood:65,sample:true},
+  {id:'t4',name:'Meera Nair',role:'CPO',avatar:'MN',color:'#9b6fe0',mood:88,sample:true},
+  {id:'t5',name:'Suresh Babu',role:'VP HR',avatar:'SB',color:'#e05c5c',mood:74,sample:true},
+  {id:'t6',name:'Kavya Rao',role:'VP Marketing',avatar:'KR',color:'#5ce0c8',mood:79,sample:true}
+];
+function seedFollowupDates(){
+  const today=new Date();
+  const plus=(d)=>{const t=new Date(today);t.setDate(t.getDate()+d);return t.toISOString().slice(0,10);};
+  return [
+    {id:'f1',text:'Updated investor deck with Q3 numbers',owner:'CFO — Priya Sharma',due:plus(2),done:false,sample:true},
+    {id:'f2',text:'Final candidate references for VP Engineering role',owner:'VP HR — Suresh Babu',due:plus(-1),done:false,sample:true},
+    {id:'f3',text:'Signed MOU draft from legal review',owner:'Legal — Nisha Singh',due:plus(5),done:false,sample:true}
+  ];
+}
+
+function uid(){return 'id'+Date.now()+Math.floor(Math.random()*10000);}
+
+function loadStore(key,seed){
+  try{
+    const raw=localStorage.getItem(key);
+    if(raw===null)return JSON.parse(JSON.stringify(seed)); // first run → seed
+    return JSON.parse(raw);
+  }catch(e){return JSON.parse(JSON.stringify(seed));}
+}
+function saveStore(key,data){try{localStorage.setItem(key,JSON.stringify(data));}catch(e){}}
+
+let priorities=loadStore('execos_priorities',SEED_PRIORITIES);
+let meetings=loadStore('execos_meetings',SEED_MEETINGS);
+let decisions=loadStore('execos_decisions',SEED_DECISIONS);
+let teamData=loadStore('execos_team',SEED_TEAM);
+let followups=loadStore('execos_followups',seedFollowupDates());
+
+function persistPriorities(){saveStore('execos_priorities',priorities);}
+function persistMeetings(){saveStore('execos_meetings',meetings);}
+function persistDecisions(){saveStore('execos_decisions',decisions);}
+function persistTeam(){saveStore('execos_team',teamData);}
+function persistFollowups(){saveStore('execos_followups',followups);}
+
+// ══ FIRST RUN WELCOME ══
+function checkFirstRun(){
+  let seen=false;
+  try{seen=localStorage.getItem('execos_welcomed')==='1';}catch(e){}
+  if(!seen)document.getElementById('welcome-overlay').style.display='flex';
+}
+function dismissWelcome(keepSample){
+  try{localStorage.setItem('execos_welcomed','1');}catch(e){}
+  document.getElementById('welcome-overlay').style.display='none';
+  if(!keepSample)doFreshStart(true);
+}
 
 // ══ DEFAULT KPI DATA ══
 const KPI_DEFAULTS={
@@ -674,7 +819,8 @@ const KPI_DEFAULTS={
   deals:{val:'24',pipe:'18.4',new:'3',unit:'Cr'},
   hc:{val:'148',open:'12',trend:'flat',tgt:'180'},
   nps:{val:'67',prev:'63',period:'Last 30 days',tgt:'70'},
-  burn:{val:'1.2',runway:'18',unit:'Cr',status:'safe'},
+  cash:{val:'21.6',unit:'Cr',recv:'3.2',pay:'1.8'},
+  burn:{val:'1.2',unit:'Cr'},
   csat:{val:'87',prev:'84',resp:'340',tgt:'90'}
 };
 
@@ -719,7 +865,12 @@ function updateClock(){
   const h=now.getHours().toString().padStart(2,'0'),mn=now.getMinutes().toString().padStart(2,'0');
   document.getElementById('live-time').textContent=d+', '+m+' '+now.getDate()+' · '+h+':'+mn;
   const hr=now.getHours();
-  document.getElementById('focus-text').textContent=(hr<12?'Good morning':hr<17?'Good afternoon':'Good evening')+', CEO. Your command center is ready.';
+  const greeting=(hr<12?'Good morning':hr<17?'Good afternoon':'Good evening')+', CEO.';
+  const todayStr=now.toISOString().slice(0,10);
+  const overdueCount=(typeof followups!=='undefined')?followups.filter(f=>!f.done&&f.due&&f.due<todayStr).length:0;
+  const focusEl=document.getElementById('focus-text');
+  if(overdueCount>0)focusEl.textContent=greeting+' ⚠ '+overdueCount+' delegated item'+(overdueCount>1?'s are':' is')+' overdue — check Priorities.';
+  else focusEl.textContent=greeting+' Your command center is ready.';
 }
 updateClock();setInterval(updateClock,30000);
 
@@ -732,6 +883,9 @@ function switchTab(name){
   if(name==='analytics')renderCharts();
   if(name==='team')renderTeam();
   if(name==='mydata')populateEditors();
+  if(name==='priorities'){renderPriorities();renderFollowups();}
+  if(name==='decisions')renderDecisions();
+  if(name==='dashboard'){renderMeetings();renderDashPriorities();}
 }
 
 // ══ RENDER DASHBOARD KPIs ══
@@ -740,6 +894,17 @@ function renderDashboard(){
   const profile=JSON.parse(localStorage.getItem('execos_profile')||'{}');
   const grid=document.getElementById('kpi-grid');
   grid.innerHTML='';
+
+  // Cash Position (most urgent CEO number — shown first)
+  const cashVal=parseFloat(kd.cash.val)||0;
+  const burnVal=parseFloat(kd.burn.val)||0;
+  const runwayMonths=burnVal>0?(cashVal/burnVal):null;
+  const cashColor=runwayMonths===null?'var(--text3)':runwayMonths>12?'var(--green)':runwayMonths>6?'var(--amber)':'var(--red)';
+  const cashPct=runwayMonths===null?0:Math.min(100,Math.round((runwayMonths/24)*100));
+  const cashDeltaTxt=runwayMonths===null?'Add Monthly Burn to see runway':(runwayMonths>12?'✅ ':runwayMonths>6?'⚠️ ':'🔴 ')+runwayMonths.toFixed(1)+' months runway';
+  const cashDeltaClass=runwayMonths===null?'kpi-flat':runwayMonths>12?'kpi-up':runwayMonths>6?'kpi-flat':'kpi-down';
+  const netRecv=(parseFloat(kd.cash.recv)||0)-(parseFloat(kd.cash.pay)||0);
+  addKPICard(grid,'Cash Position','₹'+kd.cash.val+kd.cash.unit,'Net receivables '+(netRecv>=0?'+':'')+netRecv.toFixed(1)+kd.cash.unit,cashDeltaTxt,cashDeltaClass,cashPct,cashColor);
 
   // Revenue
   const revPct=kd.rev.tgt>0?Math.min(100,Math.round((kd.rev.val/kd.rev.tgt)*100)):0;
@@ -755,7 +920,6 @@ function renderDashboard(){
 
   // Headcount
   const hcPct=kd.hc.tgt>0?Math.min(100,Math.round((kd.hc.val/kd.hc.tgt)*100)):70;
-  const hcTrend=kd.hc.trend==='up'?'▲ Growing':'kpi-up';
   const hcTrendClass=kd.hc.trend==='up'?'kpi-up':kd.hc.trend==='down'?'kpi-down':'kpi-flat';
   const hcTrendTxt=kd.hc.trend==='up'?'▲ Growing':kd.hc.trend==='down'?'▼ Reducing':'→ Stable';
   addKPICard(grid,'Team Headcount',kd.hc.val,kd.hc.open+' open positions',hcTrendTxt,hcTrendClass,hcPct,'var(--amber)');
@@ -807,11 +971,14 @@ function populateEditors(){
   document.getElementById('ed-nps-prev').value=kd.nps.prev||'';
   document.getElementById('ed-nps-period').value=kd.nps.period||'Last 30 days';
   document.getElementById('ed-nps-tgt').value=kd.nps.tgt||'';
+  // Cash
+  document.getElementById('ed-cash-val').value=kd.cash.val||'';
+  document.getElementById('ed-cash-unit').value=kd.cash.unit||'Cr';
+  document.getElementById('ed-cash-recv').value=kd.cash.recv||'';
+  document.getElementById('ed-cash-pay').value=kd.cash.pay||'';
   // Burn
   document.getElementById('ed-burn-val').value=kd.burn.val||'';
-  document.getElementById('ed-burn-runway').value=kd.burn.runway||'';
   document.getElementById('ed-burn-unit').value=kd.burn.unit||'Cr';
-  document.getElementById('ed-burn-status').value=kd.burn.status||'safe';
   // CSAT
   document.getElementById('ed-csat-val').value=kd.csat.val||'';
   document.getElementById('ed-csat-prev').value=kd.csat.prev||'';
@@ -823,11 +990,11 @@ function populateEditors(){
   if(profile.industry)document.getElementById('ed-industry').value=profile.industry;
   // Last updated
   const lus=JSON.parse(localStorage.getItem('execos_lu')||'{}');
-  ['rev','deals','hc','nps','burn','csat'].forEach(k=>{
+  ['rev','deals','hc','nps','cash','burn','csat'].forEach(k=>{
     const el=document.getElementById('lu-'+k);
     if(el&&lus[k])el.textContent='Last saved: '+lus[k];
   });
-  ['rev','deals','hc','nps','burn','csat'].forEach(k=>livePreview(k));
+  ['rev','deals','hc','nps','cash','burn','csat'].forEach(k=>livePreview(k));
 }
 
 function livePreview(k){
@@ -869,16 +1036,36 @@ function livePreview(k){
     const el=document.getElementById('prev-nps-delta');
     if(v&&p){const d=v-p;el.textContent=(d>0?'▲ +':'')+d.toFixed(0)+' pts vs prev';el.style.color=d>0?'var(--green)':d<0?'var(--red)':'var(--text3)';}
     else el.textContent='';
+  } else if(k==='cash'){
+    const v=document.getElementById('ed-cash-val').value;
+    const u=document.getElementById('ed-cash-unit').value;
+    const recv=document.getElementById('ed-cash-recv').value;
+    const pay=document.getElementById('ed-cash-pay').value;
+    document.getElementById('prev-cash-val').textContent=v?'₹'+v+u:'—';
+    const net=(parseFloat(recv)||0)-(parseFloat(pay)||0);
+    document.getElementById('prev-cash-sub').textContent=(recv||pay)?'Net receivables: '+(net>=0?'+':'')+net.toFixed(1)+u:'Enter receivables/payables';
+    const burnVal=parseFloat(document.getElementById('ed-burn-val').value);
+    const el=document.getElementById('prev-cash-delta');
+    if(v&&burnVal>0){
+      const months=(parseFloat(v)/burnVal).toFixed(1);
+      el.textContent='≈ '+months+' months runway at current burn';
+      el.style.color=months>12?'var(--green)':months>6?'var(--amber)':'var(--red)';
+    } else el.textContent='Set Monthly Burn below to see runway';
   } else if(k==='burn'){
     const v=document.getElementById('ed-burn-val').value;
-    const r=document.getElementById('ed-burn-runway').value;
     const u=document.getElementById('ed-burn-unit').value;
     document.getElementById('prev-burn-val').textContent=v?'₹'+v+u+'/mo':'—';
-    document.getElementById('prev-burn-sub').textContent=r?r+' months runway':'Enter runway';
-    const st=document.getElementById('ed-burn-status').value;
+    const cashVal=parseFloat(document.getElementById('ed-cash-val').value);
     const el=document.getElementById('prev-burn-delta');
-    el.textContent=st==='safe'?'✅ Safe':st==='watch'?'⚠️ Watch':'🔴 Critical';
-    el.style.color=st==='safe'?'var(--green)':st==='watch'?'var(--amber)':'var(--red)';
+    if(v>0&&cashVal){
+      const months=(cashVal/v).toFixed(1);
+      document.getElementById('prev-burn-sub').textContent=months+' months runway';
+      el.textContent=months>12?'✅ Safe':months>6?'⚠️ Watch':'🔴 Critical';
+      el.style.color=months>12?'var(--green)':months>6?'var(--amber)':'var(--red)';
+    } else {
+      document.getElementById('prev-burn-sub').textContent='Enter Cash Position above to see runway';
+      el.textContent='';
+    }
   } else if(k==='csat'){
     const v=document.getElementById('ed-csat-val').value;
     const p=document.getElementById('ed-csat-prev').value;
@@ -897,7 +1084,8 @@ function saveKPI(k){
   else if(k==='deals'){stored.deals={val:document.getElementById('ed-deals-val').value,pipe:document.getElementById('ed-deals-pipe').value,new:document.getElementById('ed-deals-new').value,unit:document.getElementById('ed-deals-unit').value};}
   else if(k==='hc'){stored.hc={val:document.getElementById('ed-hc-val').value,open:document.getElementById('ed-hc-open').value,trend:document.getElementById('ed-hc-trend').value,tgt:document.getElementById('ed-hc-tgt').value};}
   else if(k==='nps'){stored.nps={val:document.getElementById('ed-nps-val').value,prev:document.getElementById('ed-nps-prev').value,period:document.getElementById('ed-nps-period').value,tgt:document.getElementById('ed-nps-tgt').value};}
-  else if(k==='burn'){stored.burn={val:document.getElementById('ed-burn-val').value,runway:document.getElementById('ed-burn-runway').value,unit:document.getElementById('ed-burn-unit').value,status:document.getElementById('ed-burn-status').value};}
+  else if(k==='cash'){stored.cash={val:document.getElementById('ed-cash-val').value,unit:document.getElementById('ed-cash-unit').value,recv:document.getElementById('ed-cash-recv').value,pay:document.getElementById('ed-cash-pay').value};}
+  else if(k==='burn'){stored.burn={val:document.getElementById('ed-burn-val').value,unit:document.getElementById('ed-burn-unit').value};}
   else if(k==='csat'){stored.csat={val:document.getElementById('ed-csat-val').value,prev:document.getElementById('ed-csat-prev').value,resp:document.getElementById('ed-csat-resp').value,tgt:document.getElementById('ed-csat-tgt').value};}
   saveKPIsToStorage(stored);
   // Save last updated
@@ -921,34 +1109,72 @@ function resetAllKPIs(){
   showToast('↺ All KPIs reset to defaults');
 }
 
-// ══ STREAK ══
-(function(){
-  const el=document.getElementById('streak-row');
-  const today=new Date().getDate();
-  for(let i=1;i<=30;i++){
+// ══ FRESH START — wipes ALL sample/demo data so a real CEO starts blank ══
+function confirmFreshStart(){
+  const ok=confirm('This will permanently delete all sample data (priorities, meetings, decisions, team, KPIs) and give you a blank workspace to enter your own. This cannot be undone. Continue?');
+  if(ok)doFreshStart(false);
+}
+function doFreshStart(silent){
+  priorities=[];meetings=[];decisions=[];teamData=[];followups=[];
+  persistPriorities();persistMeetings();persistDecisions();persistTeam();persistFollowups();
+  try{
+    localStorage.removeItem('execos_kpis');
+    localStorage.removeItem('execos_lu');
+    localStorage.removeItem('execos_profile');
+  }catch(e){}
+  // hide the two purely-illustrative sample widgets on Team Pulse
+  const oh=document.getElementById('org-health-block');if(oh)oh.innerHTML='<div class="empty-hint">Connect real org health signals as you track 1-on-1s and team sentiment.</div>';
+  const oo=document.getElementById('one-on-ones-block');if(oo)oo.innerHTML='<div class="empty-hint">No 1-on-1s scheduled yet.</div>';
+  renderDashboard();renderPriorities();renderFollowups();renderMeetings();renderDecisions();renderTeam();renderStreak();
+  if(!silent)showToast('🗑 Fresh start complete — all sample data cleared');
+}
+
+// ══ STREAK (driven by real decision-log dates) ══
+function renderStreak(){
+  const el=document.getElementById('streak-row');el.innerHTML='';
+  const today=new Date();
+  const daysInMonth=new Date(today.getFullYear(),today.getMonth()+1,0).getDate();
+  const todayNum=today.getDate();
+  // Build a set of "days with activity" from real decisions (non-sample) by day-of-month, this month only
+  const monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const thisMonthLabel=monthNames[today.getMonth()];
+  const activeDays=new Set();
+  decisions.forEach(d=>{
+    if(d.sample)return;
+    const m=d.date.match(/^(\w+)\s+(\d+),/);
+    if(m&&m[1]===thisMonthLabel)activeDays.add(parseInt(m[2]));
+  });
+  for(let i=1;i<=daysInMonth;i++){
     const d=document.createElement('div');
-    d.className='streak-dot '+(i<today-10?'streak-miss':i<=today-1?'streak-done':i===today?'streak-today':'streak-miss');
-    d.textContent=i;el.appendChild(d);
+    let cls='streak-miss';
+    if(i===todayNum)cls='streak-today';
+    else if(activeDays.has(i))cls='streak-done';
+    d.className='streak-dot '+cls;d.textContent=i;el.appendChild(d);
   }
-})();
+  // compute current streak backwards from yesterday
+  let streak=0;
+  for(let i=todayNum-1;i>=1;i--){if(activeDays.has(i))streak++;else break;}
+  const label=document.getElementById('streak-label');
+  if(label)label.textContent=streak>0?'🔥 '+streak+'-day streak':'No streak yet — log a decision today to start one';
+}
 
 // ══ TEAM ══
-const teamData=[
-  {name:'Ravi Kumar',role:'CTO',avatar:'RK',color:'#5c8fe0',mood:82},
-  {name:'Priya Sharma',role:'CFO',avatar:'PS',color:'#4ecb8d',mood:90},
-  {name:'Anand Reddy',role:'VP Sales',avatar:'AR',color:'#e0a84c',mood:65},
-  {name:'Meera Nair',role:'CPO',avatar:'MN',color:'#9b6fe0',mood:88},
-  {name:'Suresh Babu',role:'VP HR',avatar:'SB',color:'#e05c5c',mood:74},
-  {name:'Kavya Rao',role:'VP Marketing',avatar:'KR',color:'#5ce0c8',mood:79},
-];
 function renderTeam(){
-  const g=document.getElementById('team-grid');if(g.children.length>0)return;
+  const g=document.getElementById('team-grid');
+  g.innerHTML='';
+  if(teamData.length===0){
+    g.innerHTML='<div class="empty-hint">No team members yet. Tap "+ Add Member" to start tracking your direct reports.</div>';
+    return;
+  }
   teamData.forEach(m=>{
     const c=document.createElement('div');c.className='team-card';
     const mc=m.mood>80?'var(--green)':m.mood>60?'var(--amber)':'var(--red)';
-    c.innerHTML='<div class="team-avatar" style="background:'+m.color+'22;color:'+m.color+'">'+m.avatar+'</div><div class="team-name">'+m.name+'</div><div class="team-role">'+m.role+'</div><div class="mood-bar"><div class="mood-fill" style="width:'+m.mood+'%;background:'+mc+'"></div></div><div style="font-size:9px;color:var(--text3);margin-top:4px;font-family:var(--font-mono)">PULSE '+m.mood+'%</div>';
+    c.innerHTML='<div class="del-x" style="position:absolute;top:6px;right:6px" onclick="event.stopPropagation();deleteTeamMember(\''+m.id+'\')">✕</div><div class="team-avatar" style="background:'+m.color+'22;color:'+m.color+'">'+m.avatar+'</div><div class="team-name">'+m.name+'</div><div class="team-role">'+m.role+'</div><div class="mood-bar"><div class="mood-fill" style="width:'+m.mood+'%;background:'+mc+'"></div></div><div style="font-size:9px;color:var(--text3);margin-top:4px;font-family:var(--font-mono)">PULSE '+m.mood+'%</div>';
     g.appendChild(c);
   });
+}
+function deleteTeamMember(id){
+  teamData=teamData.filter(m=>m.id!==id);persistTeam();renderTeam();showToast('✓ Member removed');
 }
 
 // ══ CHARTS ══
@@ -976,7 +1202,9 @@ async function sendAI(){
   const btn=document.getElementById('ai-send-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Thinking...';
   const kd=loadKPIs();
   const profile=JSON.parse(localStorage.getItem('execos_profile')||'{}');
-  const ctx='Company: '+(profile.company||'my company')+', Industry: '+(profile.industry||'tech')+'. Revenue MTD: ₹'+kd.rev.val+kd.rev.unit+' vs target ₹'+kd.rev.tgt+kd.rev.unit+'. Open deals: '+kd.deals.val+', pipeline ₹'+kd.deals.pipe+kd.deals.unit+'. Headcount: '+kd.hc.val+' ('+kd.hc.open+' open). NPS: '+kd.nps.val+'.';
+  const runwayInfo=(parseFloat(kd.burn.val)>0)?(parseFloat(kd.cash.val)/parseFloat(kd.burn.val)).toFixed(1)+' months runway':'runway unknown';
+  const openFollowups=followups.filter(f=>!f.done).length;
+  const ctx='Company: '+(profile.company||'my company')+', Industry: '+(profile.industry||'tech')+'. Revenue MTD: ₹'+kd.rev.val+kd.rev.unit+' vs target ₹'+kd.rev.tgt+kd.rev.unit+'. Open deals: '+kd.deals.val+', pipeline ₹'+kd.deals.pipe+kd.deals.unit+'. Headcount: '+kd.hc.val+' ('+kd.hc.open+' open). NPS: '+kd.nps.val+'. Cash position: ₹'+kd.cash.val+kd.cash.unit+' ('+runwayInfo+'). Open delegated follow-ups awaiting others: '+openFollowups+'.';
   try{
     const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'You are ExecOS, an elite AI executive assistant for a CEO. Use the company context provided. Respond concisely and strategically. Use bullet points for structured insights. Address the CEO directly. Context: '+ctx,messages:[{role:'user',content:msg}]})});
     const data=await resp.json();
@@ -994,6 +1222,36 @@ function appendMsg(text,role){
 function quickAsk(q){document.getElementById('ai-input').value=q;if(!apiKey){openApiModal();return;}sendAI();}
 
 // ══ PRIORITIES ══
+function renderPriorities(){
+  const buckets={high:[],med:[],low:[],done:[]};
+  priorities.forEach(p=>{ (p.done?buckets.done:buckets[p.level]).push(p); });
+  fillPriBucket('pri-high-list',buckets.high,'No critical items. Tap "+ Add Priority" to log one.');
+  fillPriBucket('pri-med-list',buckets.med,'Nothing important pending this week.');
+  fillPriBucket('pri-low-list',buckets.low,'Nothing on the monitor list.');
+  fillPriBucket('pri-done-list',buckets.done,'No completed items yet today.');
+  renderDashPriorities();
+}
+function fillPriBucket(elId,list,emptyMsg){
+  const el=document.getElementById(elId);el.innerHTML='';
+  if(list.length===0){el.innerHTML='<div class="empty-hint">'+emptyMsg+'</div>';return;}
+  list.forEach(p=>{
+    const item=document.createElement('div');item.className='priority-item';
+    item.style.opacity=p.done?'0.4':'1';item.style.textDecoration=p.done?'line-through':'';
+    item.innerHTML='<div class="pri-badge pri-'+p.level+'" onclick="toggleDone(\''+p.id+'\')" style="cursor:pointer"></div><div class="pri-text" onclick="toggleDone(\''+p.id+'\')" style="cursor:pointer">'+p.text+'</div><div class="pri-tag">'+p.tag+'</div><div class="del-x" onclick="deletePriority(\''+p.id+'\')">✕</div>';
+    el.appendChild(item);
+  });
+}
+function renderDashPriorities(){
+  const el=document.getElementById('dash-priorities');
+  const top=priorities.filter(p=>!p.done).slice(0,5);
+  el.innerHTML='';
+  if(top.length===0){el.innerHTML='<div class="empty-hint">No open priorities. Add one in the Priorities tab.</div>';return;}
+  top.forEach(p=>{
+    const item=document.createElement('div');item.className='priority-item';item.onclick=()=>switchTab('priorities');
+    item.innerHTML='<div class="pri-badge pri-'+p.level+'"></div><div class="pri-text">'+p.text+'</div><div class="pri-tag">'+p.tag+'</div>';
+    el.appendChild(item);
+  });
+}
 function addPriority(){document.getElementById('priority-modal').style.display='flex';}
 function closePriorityModal(){document.getElementById('priority-modal').style.display='none';}
 function savePriority(){
@@ -1001,31 +1259,98 @@ function savePriority(){
   const level=document.getElementById('pri-input-level').value;
   const tag=document.getElementById('pri-input-tag').value.trim().toUpperCase()||'GENERAL';
   if(!text)return;
-  const item=document.createElement('div');item.className='priority-item';item.onclick=function(){toggleDone(this)};
-  item.innerHTML='<div class="pri-badge pri-'+level+'"></div><div class="pri-text">'+text+'</div><div class="pri-tag">'+tag+'</div>';
-  document.getElementById('pri-'+level+'-list').appendChild(item);
+  priorities.push({id:uid(),level,text,tag,done:false,sample:false});
+  persistPriorities();renderPriorities();
   closePriorityModal();document.getElementById('pri-input-text').value='';document.getElementById('pri-input-tag').value='';
   showToast('✓ Priority added');
 }
-function toggleDone(el){el.style.opacity=el.style.opacity==='0.4'?'1':'0.4';el.style.textDecoration=el.style.textDecoration==='line-through'?'':'line-through';}
-function clearDone(){document.querySelectorAll('.priority-item').forEach(el=>{if(el.style.textDecoration==='line-through')el.remove();});showToast('✓ Done items cleared');}
+function toggleDone(id){
+  const p=priorities.find(x=>x.id===id);if(!p)return;
+  p.done=!p.done;persistPriorities();renderPriorities();
+}
+function deletePriority(id){
+  priorities=priorities.filter(p=>p.id!==id);persistPriorities();renderPriorities();showToast('✓ Priority deleted');
+}
+function clearDone(){
+  const before=priorities.length;
+  priorities=priorities.filter(p=>!p.done);
+  persistPriorities();renderPriorities();
+  showToast('✓ Cleared '+(before-priorities.length)+' completed items');
+}
 async function aiSuggestPriorities(){
   if(!apiKey){openApiModal();return;}showToast('✦ AI generating priorities...');
   try{
     const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,messages:[{role:'user',content:'Give me exactly 3 critical CEO priorities for today as a JSON array. Each: {text, level (high/med/low), tag}. Return only valid JSON array, no markdown.'}]})});
     const data=await resp.json();
     const items=JSON.parse(data.content[0].text.replace(/```json|```/g,'').trim());
-    items.forEach(i=>{
-      const list=document.getElementById('pri-'+i.level+'-list');if(!list)return;
-      const item=document.createElement('div');item.className='priority-item';item.onclick=function(){toggleDone(this)};
-      item.innerHTML='<div class="pri-badge pri-'+i.level+'"></div><div class="pri-text">'+i.text+'</div><div class="pri-tag">'+(i.tag||'AI')+'</div>';
-      list.appendChild(item);
-    });
+    items.forEach(i=>{priorities.push({id:uid(),level:i.level,text:i.text,tag:i.tag||'AI',done:false,sample:false});});
+    persistPriorities();renderPriorities();
     showToast('✦ AI added '+items.length+' priorities');
   }catch(e){showToast('⚠ AI suggestion failed');}
 }
 
+// ══ FOLLOW-UPS (delegated items — no AI needed, pure data tracking) ══
+function renderFollowups(){
+  const el=document.getElementById('followup-list');el.innerHTML='';
+  if(followups.length===0){el.innerHTML='<div class="empty-hint">Nothing pending from others. Tap "+ Add Follow-up" when you delegate something with a deadline.</div>';return;}
+  const todayStr=new Date().toISOString().slice(0,10);
+  // sort: open overdue first, then open by due date, then done last
+  const sorted=[...followups].sort((a,b)=>{
+    if(a.done!==b.done)return a.done?1:-1;
+    return (a.due||'9999').localeCompare(b.due||'9999');
+  });
+  sorted.forEach(f=>{
+    const isOverdue=!f.done&&f.due&&f.due<todayStr;
+    const item=document.createElement('div');
+    item.className='followup-item'+(isOverdue?' overdue':'')+(f.done?' done':'');
+    const dueLabel=f.due?formatDateLabel(f.due):'No due date';
+    item.innerHTML='<div class="fu-check'+(f.done?' checked':'')+'" onclick="toggleFollowup(\''+f.id+'\')">'+(f.done?'✓':'')+'</div>'+
+      '<div class="fu-body" style="'+(f.done?'text-decoration:line-through':'')+'">'+
+      '<div class="fu-text">'+f.text+'</div>'+
+      '<div class="fu-meta"><span class="fu-owner">👤 '+f.owner+'</span><span class="fu-due'+(isOverdue?' overdue-text':'')+'">'+(isOverdue?'⚠ OVERDUE — ':'📅 ')+dueLabel+'</span></div>'+
+      '</div>'+
+      '<div class="del-x" onclick="deleteFollowup(\''+f.id+'\')">✕</div>';
+    el.appendChild(item);
+  });
+}
+function formatDateLabel(iso){
+  const d=new Date(iso+'T00:00:00');
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return months[d.getMonth()]+' '+d.getDate();
+}
+function addFollowup(){document.getElementById('followup-modal').style.display='flex';}
+function closeFollowupModal(){document.getElementById('followup-modal').style.display='none';}
+function saveFollowup(){
+  const text=document.getElementById('fu-input-text').value.trim();
+  const owner=document.getElementById('fu-input-owner').value.trim();
+  const due=document.getElementById('fu-input-due').value;
+  if(!text||!owner){showToast('⚠ Please fill in what + who');return;}
+  followups.push({id:uid(),text,owner,due,done:false,sample:false});
+  persistFollowups();renderFollowups();
+  closeFollowupModal();
+  document.getElementById('fu-input-text').value='';document.getElementById('fu-input-owner').value='';document.getElementById('fu-input-due').value='';
+  showToast('✓ Follow-up added');
+}
+function toggleFollowup(id){
+  const f=followups.find(x=>x.id===id);if(!f)return;
+  f.done=!f.done;persistFollowups();renderFollowups();
+}
+function deleteFollowup(id){
+  followups=followups.filter(f=>f.id!==id);persistFollowups();renderFollowups();showToast('✓ Follow-up removed');
+}
+
 // ══ DECISIONS ══
+function renderDecisions(){
+  const el=document.getElementById('decision-list');el.innerHTML='';
+  if(decisions.length===0){el.innerHTML='<div class="empty-hint">No decisions logged yet. Tap "+ Log Decision" to record your first one.</div>';return;}
+  decisions.forEach(d=>{
+    const sClass={'open':'dec-open','pending':'dec-pending','closed':'dec-closed'}[d.status];
+    const sLabel={'open':'IN PROGRESS','pending':'PENDING APPROVAL','closed':'CLOSED'}[d.status];
+    const item=document.createElement('div');item.className='decision-item';
+    item.innerHTML='<div class="dec-meta"><span class="dec-title">'+d.title+'</span><span class="dec-date">'+d.date+'</span></div><div class="dec-body">'+(d.body||'No context.')+'</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><span class="dec-status '+sClass+'">'+sLabel+'</span><span class="del-x" onclick="deleteDecision(\''+d.id+'\')">✕ Delete</span></div>';
+    el.appendChild(item);
+  });
+}
 function addDecision(){document.getElementById('decision-modal').style.display='flex';}
 function closeDecisionModal(){document.getElementById('decision-modal').style.display='none';}
 function saveDecision(){
@@ -1035,13 +1360,13 @@ function saveDecision(){
   if(!title)return;
   const now=new Date();
   const dateStr=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()]+' '+now.getDate()+', '+now.getFullYear();
-  const sClass={'open':'dec-open','pending':'dec-pending','closed':'dec-closed'}[status];
-  const sLabel={'open':'IN PROGRESS','pending':'PENDING APPROVAL','closed':'CLOSED'}[status];
-  const item=document.createElement('div');item.className='decision-item';
-  item.innerHTML='<div class="dec-meta"><span class="dec-title">'+title+'</span><span class="dec-date">'+dateStr+'</span></div><div class="dec-body">'+(body||'No context.')+'</div><span class="dec-status '+sClass+'">'+sLabel+'</span>';
-  document.getElementById('decision-list').insertBefore(item,document.getElementById('decision-list').firstChild);
+  decisions.unshift({id:uid(),title,date:dateStr,body,status,sample:false});
+  persistDecisions();renderDecisions();
   closeDecisionModal();document.getElementById('dec-input-title').value='';document.getElementById('dec-input-body').value='';
   showToast('✓ Decision logged');
+}
+function deleteDecision(id){
+  decisions=decisions.filter(d=>d.id!==id);persistDecisions();renderDecisions();showToast('✓ Decision deleted');
 }
 async function aiDraftDecision(){
   if(!apiKey){openApiModal();return;}showToast('✦ AI drafting...');
@@ -1053,7 +1378,9 @@ async function aiDraftDecision(){
   }catch(e){showToast('⚠ AI draft failed');}
 }
 async function aiTeamInsight(){
-  if(!apiKey){openApiModal();return;}showToast('✦ Generating team insight...');
+  if(!apiKey){openApiModal();return;}
+  if(teamData.length===0){showToast('⚠ Add team members first');return;}
+  showToast('✦ Generating team insight...');
   const members=teamData.map(m=>m.name+' ('+m.role+', pulse '+m.mood+'%)').join(', ');
   try{
     const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:400,system:'You are an executive team coach. Give concise, actionable insights.',messages:[{role:'user',content:'My direct reports and pulse scores: '+members+'. Give me 3 specific actions I should take as CEO this week for team health. Be brief.'}]})});
@@ -1062,18 +1389,29 @@ async function aiTeamInsight(){
   }catch(e){showToast('⚠ AI insight failed');}
 }
 
-// ══ MEETING ══
+// ══ MEETINGS ══
+function renderMeetings(){
+  const el=document.getElementById('meetings-list');el.innerHTML='';
+  if(meetings.length===0){el.innerHTML='<div class="empty-hint">No meetings scheduled. Tap "+ Add Meeting" to add today\'s agenda.</div>';return;}
+  meetings.forEach(m=>{
+    const item=document.createElement('div');item.className='meeting-item';
+    item.innerHTML='<div class="meeting-time">'+m.time+'</div><div class="meeting-title">'+m.title+'</div><div class="meeting-who">'+(m.who||'')+'</div><div class="del-x" style="position:absolute;top:8px;right:8px" onclick="deleteMeeting(\''+m.id+'\')">✕</div>';
+    el.appendChild(item);
+  });
+}
 function addMeeting(){
   const time=prompt('Meeting time (e.g., 03:00 PM):');const title=prompt('Meeting title:');const who=prompt('With whom:');
   if(!time||!title)return;
-  const item=document.createElement('div');item.className='meeting-item';
-  item.innerHTML='<div class="meeting-time">'+time+'</div><div class="meeting-title">'+title+'</div><div class="meeting-who">'+(who||'')+'</div>';
-  document.getElementById('meetings-list').appendChild(item);showToast('✓ Meeting added');
+  meetings.push({id:uid(),time,title,who:who||'',sample:false});
+  persistMeetings();renderMeetings();showToast('✓ Meeting added');
+}
+function deleteMeeting(id){
+  meetings=meetings.filter(m=>m.id!==id);persistMeetings();renderMeetings();showToast('✓ Meeting removed');
 }
 function addTeamMember(){
   const name=prompt('Name:');const role=prompt('Role:');if(!name||!role)return;
-  teamData.push({name,role,avatar:name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase(),color:'#c9a84c',mood:75});
-  document.getElementById('team-grid').innerHTML='';renderTeam();showToast('✓ Member added');
+  teamData.push({id:uid(),name,role,avatar:name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase(),color:'#c9a84c',mood:75,sample:false});
+  persistTeam();renderTeam();showToast('✓ Member added');
 }
 
 // ══ API KEY ══
@@ -1150,6 +1488,10 @@ function buildIcon(size){
 
 // ══ INIT ══
 renderDashboard();
+renderMeetings();
+renderDashPriorities();
+renderStreak();
+checkFirstRun();
 </script>
 </body>
 </html>
